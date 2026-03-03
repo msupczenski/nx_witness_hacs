@@ -40,6 +40,42 @@ Simple integration to add NX Witness cameras to Home Assistant.
 
 All cameras will be automatically discovered.
 
+## NX Witness Rule Setup
+
+Events are only surfaced in Home Assistant if you have rules configured in NX Witness to write them to the event log. Two rule patterns are supported.
+
+---
+
+### Option 1 — Analytics Object Detected (recommended for object/species data)
+
+This produces structured events that include a full `analytics_attributes` payload (e.g. `Species`, `Track Duration`).
+
+1. In NX Witness open **Event Rules**
+2. Create a new rule:
+   - **Event**: `Analytics: Object Detected`
+   - **At**: select the camera(s) you want to monitor
+   - **Action**: `Write to Log`
+3. Save and enable the rule
+
+The sensor will populate `event_type: analytics_object`, `classification` (from `objectTypeId`, e.g. `animal`), and `analytics_attributes` (all key/value pairs the analytics plugin reports, e.g. `species: Bear`, `track_duration: 23.40`).
+
+---
+
+### Option 2 — Generic / Intrusion Analytics (caption-based)
+
+This covers rules driven by analytics plugins that fire a named event and write a caption in the format **`Type - Class - Zone`** (e.g. `Person - Person - Front Yard Intrusion`).
+
+1. In NX Witness open **Event Rules**
+2. Create a new rule:
+   - **Event**: the analytics event type from your plugin (e.g. `cvedia.rt.intrusion`, `Soft Trigger`, etc.)
+   - **At**: select the camera(s)
+   - **Action**: `Write to Log`
+3. Save and enable the rule
+
+The sensor will populate `event_type` (e.g. `intrusion`), `classification` (e.g. `Person`), and `area` (e.g. `Front Yard Intrusion`) by parsing the caption.
+
+---
+
 ## Requirements
 
 - NX Witness Server with REST API v4 support
@@ -66,15 +102,19 @@ Each camera gets a `binary_sensor` entity (e.g. `binary_sensor.camera_1_event`) 
 | Attribute | Example | Description |
 |---|---|---|
 | `camera_id` | `{uuid}` | Internal NX Witness camera ID |
-| `event_type` | `intrusion` | Human-readable event type (e.g. `motion`, `intrusion`, `object_detected`) |
-| `classification` | `Person` | Detected object type for analytics events (if available) |
-| `area` | `Front Yard Intrusion` | Rule/zone name from NX Witness (if available) |
+| `event_type` | `intrusion` | Human-readable event type (e.g. `motion`, `intrusion`, `analytics_object`) |
+| `classification` | `animal` | Detected object type for analytics events (if available) |
+| `area` | `Front Yard Intrusion` | Rule/zone name from NX Witness caption (if available) |
 | `event_state` | `detected` | `detected` or `stopped` |
 | `event_description` | `Person detected on zone A` | Description from the event (if available) |
 | `last_detection` | `2026-03-02T10:00:00` | ISO timestamp of the last event |
+| `analytics_attributes` | `{species: Bear, track_duration: "23.40"}` | Raw key/value attributes from the analytics plugin (Option 1 rules only) |
 
-### Example Automation
+> `analytics_attributes` is a dict with snake_cased keys. Any attribute your analytics plugin reports (Species, Track Duration, Confidence, etc.) will appear here automatically.
 
+### Example Automations
+
+**Option 2 — trigger on intrusion classification (caption-based):**
 ```yaml
 automation:
   - alias: "Person detected on front door camera"
@@ -88,10 +128,34 @@ automation:
     action:
       - service: notify.mobile_app
         data:
-          message: "Person detected!"
+          message: "Person detected at {{ state_attr('binary_sensor.front_door_event', 'area') }}!"
+```
+
+**Option 1 — trigger on analytics object species:**
+```yaml
+automation:
+  - alias: "Bear detected on wildlife camera"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.wildlife_camera_event
+        to: "on"
+    condition:
+      - condition: template
+        value_template: >
+          {{ state_attr('binary_sensor.wildlife_camera_event', 'analytics_attributes', {}).get('species') == 'Bear' }}
+    action:
+      - service: notify.mobile_app
+        data:
+          message: >
+            Bear detected! Track duration: {{ state_attr('binary_sensor.wildlife_camera_event', 'analytics_attributes', {}).get('track_duration') }}s
 ```
 
 ## Changelog
+
+### 0.3.3
+- New `analytics_attributes` sensor attribute surfaces all key/value pairs from `eventData.attributes` (e.g. `species: Bear`, `track_duration: 23.40`) for Analytics Object Detected rules
+- Added NX Witness Rule Setup section to README covering both Option 1 (Analytics Object Detected) and Option 2 (caption-based intrusion/generic) rule patterns
+- Fixed `_extract_object_class()` to correctly handle `eventData.attributes` as a list of `{name, value}` dicts (matching actual NX Witness API format)
 
 ### 0.3.2
 - `area` attribute now shows only the zone/rule name (e.g. `Front Yard Intrusion`) instead of the full caption string
@@ -115,7 +179,7 @@ automation:
 
 ## Version
 
-Current version: 0.3.2
+Current version: 0.3.3
 
 ## License
 
