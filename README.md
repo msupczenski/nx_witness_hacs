@@ -244,6 +244,12 @@ Restart Home Assistant after saving. The alert will repeat every 5 minutes until
 
 ## Changelog
 
+### 0.4.2
+- Internal refactor: shared SSL context and event helpers extracted into `utils.py` — eliminates duplicated SSL setup code across config flow and coordinator
+- API client consolidated into a single `_request()` helper with automatic token refresh on 401, replacing four near-identical retry blocks
+- Event lookup optimised: the coordinator now pre-indexes events by camera ID so each binary sensor does an O(1) dict lookup instead of scanning the full event list on every 5-second poll tick
+- Session cleanup: coordinator now closes the aiohttp session on integration unload
+
 ### 0.4.1
 - **Bug fix:** When NX fires multiple rules simultaneously for the same camera (e.g. an `analyticsObject` person-tracking event and a separate `analytics` intrusion-rule event at the same time), the sensor now processes **all** of them instead of stopping at the first match
 - The most-recent event continues to drive the primary attributes (`event_type`, `classification`, `area`, etc.)
@@ -275,7 +281,7 @@ Restart Home Assistant after saving. The alert will repeat every 5 minutes until
 
 ## Version
 
-Current version: 0.4.1
+Current version: 0.4.2
 
 ## License
 
