@@ -79,8 +79,10 @@ class NXWitnessClient:
                 return 0, None
         return 0, None
 
-    async def get_ticket(self) -> str | None:
+    async def get_ticket(self, force_new_token: bool = False) -> str | None:
         """Get a one-time ticket for media streaming."""
+        if force_new_token:
+            self.token = None
         url = f"{self.host}/rest/v4/login/tickets"
         _, result = await self._request("post", url)
         if isinstance(result, dict):

@@ -111,4 +111,3 @@ class NXWitnessCamera(CoordinatorEntity, Camera):
             self._entry_id, self.coordinator.stream_secret, self._camera_id
         )
         return f"{base}{path}"
-
