@@ -1,5 +1,6 @@
 """DataUpdateCoordinator for NX Witness."""
 import logging
+import secrets
 from datetime import datetime, timedelta
 
 from homeassistant.core import HomeAssistant
@@ -32,6 +33,7 @@ class NXWitnessDataUpdateCoordinator(DataUpdateCoordinator):
         self.events = []
         self.last_camera_check = datetime.min
         self._session = None
+        self.stream_secret = secrets.token_urlsafe(16)
 
         super().__init__(
             hass,

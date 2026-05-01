@@ -7,10 +7,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.network import get_url
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import NXWitnessDataUpdateCoordinator
+from .stream_view import stream_path_for
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ async def async_setup_entry(
 
     cameras = []
     for camera_data in coordinator.data.get("cameras", []):
-        cameras.append(NXWitnessCamera(coordinator, camera_data))
+        cameras.append(NXWitnessCamera(coordinator, camera_data, entry.entry_id))
 
     async_add_entities(cameras)
 
@@ -40,11 +42,13 @@ class NXWitnessCamera(CoordinatorEntity, Camera):
         self,
         coordinator: NXWitnessDataUpdateCoordinator,
         camera_data: dict[str, Any],
+        entry_id: str,
     ) -> None:
         """Initialize the camera."""
         super().__init__(coordinator)
         Camera.__init__(self)
 
+        self._entry_id = entry_id
         self._camera_id = camera_data["id"]
         self._attr_name = camera_data.get("name", f"Camera {self._camera_id}")
         self._attr_unique_id = f"{DOMAIN}_{self._camera_id}"
@@ -93,12 +97,18 @@ class NXWitnessCamera(CoordinatorEntity, Camera):
             _LOGGER.error("Error getting camera image: %s", ex)
         return None
 
-    async def stream_source(self) -> str:
-        """Return the stream source."""
-        # Get a fresh ticket for streaming
-        ticket = await self.coordinator.client.get_ticket()
-        if not ticket:
-            _LOGGER.error("Failed to get ticket for stream")
-            return None
-        
-        return self.coordinator.client.get_camera_stream_url(self._camera_id, ticket)
+
+    async def stream_source(self) -> str | None:
+        """Return the stream source.
+
+        NX tickets are single-use, but ffmpeg/Stream opens the source URL
+        more than once (probe + read + reconnects). We return a URL served
+        by NXWitnessStreamView, which mints a fresh ticket per request and
+        302-redirects to the real NX media URL.
+        """
+        base = get_url(self.hass, allow_internal=True, prefer_external=False)
+        path = stream_path_for(
+            self._entry_id, self.coordinator.stream_secret, self._camera_id
+        )
+        return f"{base}{path}"
+
