@@ -2,6 +2,21 @@
   "config": {
     "step": {
       "user": {
+        "title": "Select an NX Witness server",
+        "description": "We scanned your network and found these servers. Choose one, or enter details manually.",
+        "data": {
+          "server": "Server"
+        }
+      },
+      "credentials": {
+        "title": "Sign in to {host}",
+        "description": "Enter the credentials for {host}",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "manual": {
         "title": "Connect to NX Witness",
         "description": "Enter your NX Witness server details",
         "data": {
