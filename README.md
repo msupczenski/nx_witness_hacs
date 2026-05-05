@@ -244,6 +244,10 @@ Restart Home Assistant after saving. The alert will repeat every 5 minutes until
 
 ## Changelog
 
+### 0.4.4
+- **New feature:** Config flow now auto-discovers NX Witness servers on the local network — a picklist of detected servers is shown during setup, with a fallback to manual entry — contributed by [@KEppersonNx](https://github.com/KEppersonNx)
+- **Bug fix:** Session token is now forced to refresh on every `stream_source()` call to prevent stale tokens from silently breaking live feeds — contributed by [@KEppersonNx](https://github.com/KEppersonNx)
+
 ### 0.4.3
 - **Bug fix:** Camera streams now proxy through Home Assistant to mint a fresh NX Witness ticket per request, preventing 401 errors when ffmpeg opens the source URL multiple times (probe + read + reconnects) — contributed by [@KEppersonNx](https://github.com/KEppersonNx)
 
@@ -284,7 +288,7 @@ Restart Home Assistant after saving. The alert will repeat every 5 minutes until
 
 ## Version
 
-Current version: 0.4.3
+Current version: 0.4.4
 
 ## License
 
