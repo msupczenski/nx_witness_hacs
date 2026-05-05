@@ -97,16 +97,21 @@ class NXWitnessClient:
         _, data = await self._request("get", url)
         if not isinstance(data, list):
             return []
-        cameras = [
-            {
-                "id": device.get("id"),
-                "name": device.get("name"),
-                "model": device.get("model"),
-                "status": device.get("status"),
-            }
-            for device in data
-            if device.get("deviceType") == "Camera"
-        ]
+        camera_types = {"Camera", "MultisensorCamera", "VirtualCamera"}
+        non_camera_types = {"IOModule", "NVR", "Server", "Bridge"}
+        cameras = []
+        for device in data:
+            device_type = device.get("deviceType", "")
+            if device_type in camera_types:
+                cameras.append({
+                    "id": device.get("id"),
+                    "name": device.get("name"),
+                    "model": device.get("model"),
+                    "status": device.get("status"),
+                    "deviceType": device_type,
+                })
+            elif device_type not in non_camera_types:
+                _LOGGER.debug("Skipping device with unknown type %r: %s", device_type, device.get("name"))
         _LOGGER.debug("Found %d cameras", len(cameras))
         return cameras
 
