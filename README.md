@@ -244,6 +244,9 @@ Restart Home Assistant after saving. The alert will repeat every 5 minutes until
 
 ## Changelog
 
+### 0.4.3
+- **Bug fix:** Camera streams now proxy through Home Assistant to mint a fresh NX Witness ticket per request, preventing 401 errors when ffmpeg opens the source URL multiple times (probe + read + reconnects) — contributed by [@KEppersonNx](https://github.com/KEppersonNx)
+
 ### 0.4.2
 - Internal refactor: shared SSL context and event helpers extracted into `utils.py` — eliminates duplicated SSL setup code across config flow and coordinator
 - API client consolidated into a single `_request()` helper with automatic token refresh on 401, replacing four near-identical retry blocks
@@ -281,7 +284,7 @@ Restart Home Assistant after saving. The alert will repeat every 5 minutes until
 
 ## Version
 
-Current version: 0.4.2
+Current version: 0.4.3
 
 ## License
 
