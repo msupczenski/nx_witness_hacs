@@ -9,6 +9,9 @@ from homeassistant.helpers import device_registry as dr
 
 from .const import DOMAIN
 from .coordinator import NXWitnessDataUpdateCoordinator
+from .stream_view import NXWitnessStreamView
+
+_VIEW_REGISTERED_KEY = "_stream_view_registered"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,6 +21,10 @@ PLATFORMS = [Platform.CAMERA, Platform.BINARY_SENSOR]
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up NX Witness from a config entry."""
     hass.data.setdefault(DOMAIN, {})
+
+    if not hass.data[DOMAIN].get(_VIEW_REGISTERED_KEY):
+        hass.http.register_view(NXWitnessStreamView(hass))
+        hass.data[DOMAIN][_VIEW_REGISTERED_KEY] = True
 
     coordinator = NXWitnessDataUpdateCoordinator(
         hass,

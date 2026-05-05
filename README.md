@@ -244,6 +244,16 @@ Restart Home Assistant after saving. The alert will repeat every 5 minutes until
 
 ## Changelog
 
+### 0.4.5
+- **Bug fix:** Multi-lens and third-party cameras (e.g. VCA dual-lens, Hanwha multisensor) now discovered correctly — device type filter expanded to include `MultisensorCamera` and `VirtualCamera` in addition to `Camera` (fixes #17)
+
+### 0.4.4
+- **New feature:** Config flow now auto-discovers NX Witness servers on the local network — a picklist of detected servers is shown during setup, with a fallback to manual entry — contributed by [@KEppersonNx](https://github.com/KEppersonNx)
+- **Bug fix:** Session token is now forced to refresh on every `stream_source()` call to prevent stale tokens from silently breaking live feeds — contributed by [@KEppersonNx](https://github.com/KEppersonNx)
+
+### 0.4.3
+- **Bug fix:** Camera streams now proxy through Home Assistant to mint a fresh NX Witness ticket per request, preventing 401 errors when ffmpeg opens the source URL multiple times (probe + read + reconnects) — contributed by [@KEppersonNx](https://github.com/KEppersonNx)
+
 ### 0.4.2
 - Internal refactor: shared SSL context and event helpers extracted into `utils.py` — eliminates duplicated SSL setup code across config flow and coordinator
 - API client consolidated into a single `_request()` helper with automatic token refresh on 401, replacing four near-identical retry blocks
@@ -281,7 +291,7 @@ Restart Home Assistant after saving. The alert will repeat every 5 minutes until
 
 ## Version
 
-Current version: 0.4.2
+Current version: 0.4.5
 
 ## License
 
