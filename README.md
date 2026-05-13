@@ -244,6 +244,9 @@ Restart Home Assistant after saving. The alert will repeat every 5 minutes until
 
 ## Changelog
 
+### 0.4.6
+- **New feature:** Each camera now gets an `image.{camera_name}_best_shot` entity that updates whenever an analytics event (`nx.analytics.BestShot` or `nx.analytics.ObjectDetected`) arrives. When the event carries an object track ID, the integration fetches the analytically-determined best shot frame via the NX `objectTracks` API; otherwise it falls back to the current camera snapshot.
+
 ### 0.4.5
 - **Bug fix:** Multi-lens and third-party cameras (e.g. VCA dual-lens, Hanwha multisensor) now discovered correctly — device type filter expanded to include `MultisensorCamera` and `VirtualCamera` in addition to `Camera` (fixes #17)
 
@@ -291,7 +294,7 @@ Restart Home Assistant after saving. The alert will repeat every 5 minutes until
 
 ## Version
 
-Current version: 0.4.5
+Current version: 0.4.6
 
 ## License
 
