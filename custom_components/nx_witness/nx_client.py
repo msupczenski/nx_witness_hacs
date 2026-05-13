@@ -119,6 +119,47 @@ class NXWitnessClient:
         """Get stream URL for a camera with ticket."""
         return f"{self.host}/rest/v4/devices/{camera_id}/media?_ticket={ticket}"
 
+    async def get_best_shot_image(
+        self,
+        camera_id: str,
+        track_id: str | None = None,
+    ) -> bytes | None:
+        """Fetch best shot image bytes.
+
+        Tries the analytics object track endpoint when a track_id is available,
+        then falls back to the current camera snapshot.
+        """
+        ticket = await self.get_ticket()
+        if not ticket:
+            return None
+
+        if track_id:
+            url = f"{self.host}/rest/v4/analytics/objectTracks/{track_id}/bestShot?_ticket={ticket}"
+            try:
+                async with self.session.get(
+                    url, timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    if response.status == 200:
+                        return await response.read()
+                    _LOGGER.debug(
+                        "Track best shot endpoint returned %s, falling back to snapshot",
+                        response.status,
+                    )
+            except aiohttp.ClientError as ex:
+                _LOGGER.debug("Track best shot request failed (%s), falling back to snapshot", ex)
+
+        url = f"{self.host}/rest/v4/devices/{camera_id}/image?_ticket={ticket}"
+        try:
+            async with self.session.get(
+                url, timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                if response.status == 200:
+                    return await response.read()
+                _LOGGER.error("Camera snapshot returned %s for %s", response.status, camera_id)
+        except aiohttp.ClientError as ex:
+            _LOGGER.error("Error fetching camera snapshot for %s: %s", camera_id, ex)
+        return None
+
     async def get_event_log(
         self,
         start_time_ms: int | None = None,
